@@ -7,12 +7,20 @@ version: 1.3.0
 
 import httpx
 from typing import Generator, Callable
+from pydantic import BaseModel, Field
 
 
 class Tools:
+    class Valves(BaseModel):
+        BACKEND_API_KEY: str = Field(
+            default="this_is_a_secure_token",
+            description="The secret token used to authenticate requests with your FastAPI backend proxy."
+        )
+
     def __init__(self):
         self.backend_url = "http://host.docker.internal:8000"
-        self.headers = {"X-API-Key": "this_is_a_secure_token"}
+        # instantiate the default valves
+        self.valves = self.Valves()
 
     async def search_places(self, query: str, limit: int = 3) -> str:
         """
@@ -44,9 +52,11 @@ class Tools:
 
             url = f"{self.backend_url}/api/search"
             params = {"query": query}
+            
+            headers = {"X-API-Key": self.valves.BACKEND_API_KEY}
 
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=self.headers, timeout=15.0)
+                response = await client.get(url, params=params, headers=headers, timeout=15.0)
                 if response.status_code != 200:
                     return f"Error from maps backend: {response.text}"
 
@@ -97,9 +107,11 @@ class Tools:
         try:
             url = f"{self.backend_url}/api/directions"
             params = {"origin": origin, "destination": destination}
+            
+            headers = {"X-API-Key": self.valves.BACKEND_API_KEY}
 
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, headers=self.headers, timeout=15.0)
+                response = await client.get(url, params=params, headers=headers, timeout=15.0)
                 if response.status_code != 200:
                     return f"Error from directions backend: {response.text}"
 
