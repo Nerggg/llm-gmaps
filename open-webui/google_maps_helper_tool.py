@@ -2,7 +2,7 @@
 title: Google Maps Helper Tool
 author: Developer
 description: Queries a secure local proxy backend to fetch places with clean navigation links and directions.
-version: 1.2.0
+version: 1.3.0
 """
 
 import httpx
@@ -12,6 +12,7 @@ from typing import Generator, Callable
 class Tools:
     def __init__(self):
         self.backend_url = "http://host.docker.internal:8000"
+        self.headers = {"X-API-Key": "this_is_a_secure_token"}
 
     async def search_places(self, query: str, limit: int = 3) -> str:
         """
@@ -27,7 +28,6 @@ class Tools:
             if not query or len(query.strip()) < 2:
                 return "Please provide a valid search query of at least 2 characters."
 
-            # 2. convert limit to an integer and apply a defensive cap (between 1 and 5)
             warning_msg = ""
             try:
                 original_limit = int(limit)
@@ -46,7 +46,7 @@ class Tools:
             params = {"query": query}
 
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, timeout=15.0)
+                response = await client.get(url, params=params, headers=self.headers, timeout=15.0)
                 if response.status_code != 200:
                     return f"Error from maps backend: {response.text}"
 
@@ -99,7 +99,7 @@ class Tools:
             params = {"origin": origin, "destination": destination}
 
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, timeout=15.0)
+                response = await client.get(url, params=params, headers=self.headers, timeout=15.0)
                 if response.status_code != 200:
                     return f"Error from directions backend: {response.text}"
 
@@ -109,7 +109,7 @@ class Tools:
                 dur = data.get("duration", "Unknown")
                 directions_url = data.get("directions_url")
 
-                markdown_out = f"###Routing Details:\n\n"
+                markdown_out = f"### Routing Details:\n\n"
                 markdown_out += f"* **Start Address:** {data.get('origin', origin)}\n"
                 markdown_out += (
                     f"* **End Address:** {data.get('destination', destination)}\n"

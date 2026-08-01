@@ -1,11 +1,12 @@
 import time
 import re
-from fastapi import FastAPI, Request, HTTPException, Query
+import urllib.parse
+from fastapi import FastAPI, Request, HTTPException, Query, Security, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import urllib.parse
 
 from backend.services.google_maps import google_maps_service
 from backend.config import settings
@@ -17,11 +18,21 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=False,
+    allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+API_KEY_NAME = "X-API-Key"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    if api_key != settings.BACKEND_API_KEY:
+        raise HTTPException(
+            status_code=403, 
+            detail="Forbidden: Invalid or missing proxy gateway credentials"
+        )
 
 class TTLCache:
     def __init__(self, ttl_seconds: int = 1800):
@@ -54,7 +65,7 @@ def sanitize_input(text: str) -> str:
     
     return clean.strip()[:100]
 
-@app.get("/api/search")
+@app.get("/api/search", dependencies=[Depends(verify_api_key)])
 @limiter.limit("15/minute")
 async def search_places(request: Request, query: str = Query(..., min_length=2)):
     sanitized_query = sanitize_input(query)
@@ -65,8 +76,6 @@ async def search_places(request: Request, query: str = Query(..., min_length=2))
     
     try:
         raw_data = await google_maps_service.search_places(sanitized_query)
-        
-        # results are returned in a "places" list
         places = raw_data.get("places", [])
         formatted_results = []
         
@@ -79,7 +88,6 @@ async def search_places(request: Request, query: str = Query(..., min_length=2))
             
             # formulate the google maps embed and direct urls
             static_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=15&size=500x300&markers=color:red%7C{lat},{lng}&key={settings.GOOGLE_MAPS_CLIENT_KEY}"
-            embed_url = f"https://www.google.com/maps/embed/v1/place?key={settings.GOOGLE_MAPS_CLIENT_KEY}&q=place_id:{place_id}"
             view_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}&query_place_id={place_id}"
             
             formatted_results.append({
@@ -88,7 +96,6 @@ async def search_places(request: Request, query: str = Query(..., min_length=2))
                 "address": address,
                 "coordinates": {"lat": lat, "lng": lng},
                 "static_map_url": static_url,
-                "embed_map_url": embed_url,
                 "direct_map_url": view_url
             })
             
@@ -101,7 +108,7 @@ async def search_places(request: Request, query: str = Query(..., min_length=2))
         raise HTTPException(status_code=500, detail=f"Failed to query location services: {str(e)}")
 
 
-@app.get("/api/directions")
+@app.get("/api/directions", dependencies=[Depends(verify_api_key)])
 @limiter.limit("15/minute")
 async def get_directions(
     request: Request, 

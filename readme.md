@@ -26,6 +26,11 @@ To render interactive client-side map embeds while protecting sensitive backgrou
 * **The "Near Me" Fail-Safe:** Small local models (like `llama3.2:3b`) often struggle with negative constraints and will append phrases like "near me" to search terms. The backend utilizes a case-insensitive regex pattern to automatically strip out `"near me"` before queries are sent to Google, ensuring precise geographic search results.
 * **Local TTL Cache:** A thread-safe, in-memory Time-To-Live (TTL) cache intercepts incoming searches. If an LLM or user repeats a query within 30 minutes, it is served instantly from local memory, keeping Google Cloud billing overhead minimal.
 
+### 4. First-Party Proxy Authentication (Gateway Security)
+To ensure that the proxy API is completely secure against unauthorized external access (preventing anyone on the local network from abusing your Google Maps credits), the proxy implements an **API Key Header validation** (`X-API-Key`):
+* **Security Verification:** Every server-side endpoint requires a valid `X-API-Key` header matching the private `BACKEND_API_KEY` defined in the gateway `.env`.
+* **Tool-Level Handshake:** The Open WebUI tool initializes with this private credential and securely passes it inside the HTTP request headers during runtime, establishing a closed-loop trust boundary between your AI UI container and your API.
+
 ---
 
 ## Step-by-Step Local Setup & Run Guide
