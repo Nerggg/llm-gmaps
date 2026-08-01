@@ -21,6 +21,7 @@ To render interactive client-side map embeds (`<iframe>` tags) while protecting 
 
 * **Private Server Key (`GOOGLE_MAPS_SERVER_KEY`):** Kept strictly on the backend host in `.env`. It is **never** sent to the client browser. It is restricted in your Google Cloud Console strictly to the **Places API (New)** and **Routes API (New)**, with no application referrer restrictions (as server-side calls do not send HTTP referrers).
 * **Public Client Key (`GOOGLE_MAPS_CLIENT_KEY`):** Exposed in the `<iframe>` URL inside the chat window so Google can render the map. To prevent abuse, this key is restricted in your Google Cloud Console strictly to the **Maps Embed API** only, with HTTP Referrer constraints limited strictly to your Open WebUI domains (e.g., `http://localhost:3000/*` and `http://localhost:8000/*`). If this key is stolen, it is useless on any other domain and cannot be used to run coordinates or routing searches.
+* **Public Client Key (`GOOGLE_MAPS_CLIENT_KEY`):** Exposed inside the standard Markdown image URLs (`![map](...)`) returned to the user's browser so Google can generate static map previews. To prevent abuse, this key is restricted in your Google Cloud Console strictly to the **Maps Static API** with HTTP Referrer constraints limited strictly to your Open WebUI domains (`http://localhost:3000/*`). If this key is stolen, it cannot be used to run expensive coordinates or routing searches on other domains.
 
 ### 3. Defensive Parameter Sanitization & Caching
 * **The "Near Me" Fail-Safe:** Small local models (like `llama3.2:3b`) often struggle with negative constraints and will append phrases like "near me" to search terms. The backend utilizes a case-insensitive regex pattern to automatically strip out `"near me"` before queries are sent to Google, ensuring precise geographic search results.
@@ -92,15 +93,23 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 
 1. Go to **Workspace > Models** in the left sidebar menu.
 2. Click **Create** and select your base model of choice (e.g., `llama3.2`).
-3. Scroll down to the **Advanced Params** section:
+3. Locate the **System Prompt** text area and paste the following configuration:
+   ```text
+	You are an AI assistant equipped with a Google Maps Helper Tool. Whenever you use the tool to find locations:
+	1. You MUST use the exact telemetry (e.g., distance, duration, addresses) returned by the tool. Do not hallucinate directions.
+	2. For each location found, you MUST copy the exact Markdown image (e.g., '![Map of ...](...)') AND the clickable Markdown link (e.g., '[Open on Google Maps](...)') verbatim from the tool output into your final response. Never omit the map images or links.
+	3. If the user asks for a subjective or live metric (such as "most crowded", "cheapest", "cleanest", or "best") that is not explicitly detailed in the tool's data, do not refuse to answer. Instead, present the top matching locations returned by the tool anyway, and add a polite disclaimer explaining that live occupancy, pricing, or subjective ratings are not directly available.
+	4. Treat each new query as a fresh request. Prioritize the locations returned by the most recent tool execution. Do not attempt to link, compare, or apologize for changes in location relative to previous conversation turns (e.g., if the user shifts from Seoul to New York, discuss New York exclusively and do not reference Seoul).
+   ```
+4. Scroll down to the **Advanced Params** section:
    * Locate **`num_ctx (Ollama)`** (Context Length) and change its value to **`8192`**. This gives the model enough token space to hold system instructions and tool definitions without truncation.
    * Locate **`Function Calling`** and switch it from *Native* (or *Default*) to **`Legacy`**. This switches the model to prompt-based function execution, which is highly reliable for smaller local models.
-4. Scroll down to the **Tools** section:
+5. Scroll down to the **Tools** section:
    * Click **Select Tool** and choose **`Google Maps Helper Tool`**. This binds the custom tool natively to this model.
-5. Scroll down to the **Capabilities** section:
+6. Scroll down to the **Capabilities** section:
    * Locate **Code Interpreter** and **uncheck** it. This prevents the LLM from attempting to write and execute its own Python scripts in place of our API.
    * Locate **Web Search** in the same list and **uncheck** it. This prevents Open WebUI's search engine from overriding our custom maps tool.
-6. Click **Save & Update** at the bottom of the model configuration page.
+7. Click **Save & Update** at the bottom of the model configuration page.
 
 ---
 
@@ -109,13 +118,13 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, ensure that the **Google Maps Helper Tool** is toggled **ON**, and test the following prompts:
 
 ### 1. Location Search Test
-* **Prompt:** *"Use the Google Maps Helper Tool to find popular food spots in Chinatown, Singapore and include the clickable Google Maps links."*
+* **Prompt:** *"Find popular food spots in Chinatown, Singapore."*
 * **Result:** 
 ![Location Search Result](./assets/search_result.png)
 ![Location Search Tool Call](./assets/search_tool_call.png)
 
 ### 2. Point-to-Point Directions Test
-* **Prompt:** *"Use the Google Maps Helper Tool to give me directions from Marina Bay Sands to Changi Airport."*
+* **Prompt:** *"Give me directions from Marina Bay Sands to Changi Airport."*
 * **Result:** 
 ![Location Direction Result](./assets/direction_result.png)
 ![Location Direction Tool Call](./assets/direction_tool_call.png)
