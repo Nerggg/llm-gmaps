@@ -1,8 +1,8 @@
 """
 title: Google Maps Helper Tool
 author: Developer
-description: Queries a secure local proxy backend to fetch places with interactive map embeds and directions.
-version: 1.1.0
+description: Queries a secure local proxy backend to fetch places with clean navigation links and directions.
+version: 1.2.0
 """
 
 import httpx
@@ -45,18 +45,11 @@ class Tools:
                 for i, place in enumerate(results[:3], 1):
                     name = place.get("name")
                     address = place.get("address")
-                    embed_url = place.get("embed_map_url")
                     direct_url = place.get("direct_map_url")
 
                     markdown_out += f"**{i}. {name}**\n"
                     markdown_out += f"📍 *{address}*\n\n"
-
-                    markdown_out += (
-                        f'<iframe src="{embed_url}" width="100%" height="300" '
-                        f'style="border:0; border-radius: 8px; margin-bottom: 12px;" '
-                        f'allowfullscreen="" loading="lazy"></iframe>\n\n'
-                    )
-                    markdown_out += f"🔗 [Open on Google Maps]({direct_url})\n\n"
+                    markdown_out += f"🔗 **[Open on Google Maps]({direct_url})**\n\n"
                     markdown_out += "---\n\n"
 
                 return markdown_out
