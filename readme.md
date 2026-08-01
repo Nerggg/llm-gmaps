@@ -17,10 +17,9 @@ In basic agent workflows, LLMs or custom tools are sometimes configured to query
 By building a lightweight **FastAPI proxy gateway**, we maintain full control over outgoing traffic, sanitize user inputs defensively, cache queries locally, and restrict external API access.
 
 ### 2. Two-Key Security Architecture
-To render interactive client-side map embeds (`<iframe>` tags) while protecting sensitive background services, this project implements a **Two-Key Architecture**:
+To render interactive client-side map embeds while protecting sensitive background services, this project implements a **Two-Key Architecture**:
 
 * **Private Server Key (`GOOGLE_MAPS_SERVER_KEY`):** Kept strictly on the backend host in `.env`. It is **never** sent to the client browser. It is restricted in your Google Cloud Console strictly to the **Places API (New)** and **Routes API (New)**, with no application referrer restrictions (as server-side calls do not send HTTP referrers).
-* **Public Client Key (`GOOGLE_MAPS_CLIENT_KEY`):** Exposed in the `<iframe>` URL inside the chat window so Google can render the map. To prevent abuse, this key is restricted in your Google Cloud Console strictly to the **Maps Embed API** only, with HTTP Referrer constraints limited strictly to your Open WebUI domains (e.g., `http://localhost:3000/*` and `http://localhost:8000/*`). If this key is stolen, it is useless on any other domain and cannot be used to run coordinates or routing searches.
 * **Public Client Key (`GOOGLE_MAPS_CLIENT_KEY`):** Exposed inside the standard Markdown image URLs (`![map](...)`) returned to the user's browser so Google can generate static map previews. To prevent abuse, this key is restricted in your Google Cloud Console strictly to the **Maps Static API** with HTTP Referrer constraints limited strictly to your Open WebUI domains (`http://localhost:3000/*`). If this key is stolen, it cannot be used to run expensive coordinates or routing searches on other domains.
 
 ### 3. Defensive Parameter Sanitization & Caching
@@ -119,14 +118,146 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 
 Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, and ensure that the **Google Maps Helper Tool** is toggled **ON**. These are examples of the prompts and their results:
 
-### 1. Location Search Test
-* **Prompt:** *"Find popular food spots in Chinatown, Singapore."*
-* **Result:** 
-![Location Search Result](./assets/search_result.png)
-![Location Search Tool Call](./assets/search_tool_call.png)
+### 1. "Find 4 popular parks in Seoul."
+<details>
 
-### 2. Point-to-Point Directions Test
-* **Prompt:** *"Give me directions from Marina Bay Sands to Changi Airport."*
-* **Result:** 
-![Location Direction Result](./assets/direction_result.png)
-![Location Direction Tool Call](./assets/direction_tool_call.png)
+#### Screenshot of Chat Bubble:
+![Location Search Result](./assets/test_1.png)
+
+#### Response Markdown:
+Here are 4 popular parks in Seoul:
+
+1. **Yeouido Hangang Park**  
+    📍 *330 Yeouidong-ro, Yeongdeungpo District, Seoul, South Korea*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.5267106,126.9347112&query_place_id=ChIJ77fEAzuffDURLEWNv56G2KQ)**  
+
+2. **Seoul Forest Park**  
+    📍 *273 Ttukseom-ro, Seongdong-gu, Seoul, South Korea*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.544387799999996,127.03744239999999&query_place_id=ChIJK_b0UX2jfDURmkYPvmWYm90)**  
+
+3. **Namsan Mountain Park**  
+    📍 *231 Samil-daero, Jung District, Seoul, South Korea*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.5509895,126.99089910000001&query_place_id=ChIJm3V0fu2ifDURL5X2_nPOeVQ)**  
+
+4. **Haneul Park**  
+    📍 *95 Haneulgongwon-ro, Mapo-gu, Seoul, South Korea*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.5674533,126.8854782&query_place_id=ChIJX2GTuVJFezURGK4FSyWdbak)**  
+
+</details>
+
+### 2. "Find 10 crowded restaurant in Singapore."
+<details>
+
+#### Screenshot of Chat Bubble:
+![Location Search Result](./assets/test_2.png)
+
+#### Response Markdown:
+**Notice to User:** We have capped the output at 5 results to prevent the response from getting too long.
+
+We were unable to find more than 5 crowded restaurants in Singapore within our search capabilities. However, here are the top 5 places matching your query:
+
+1. **Burnt Ends**  
+    📍 *7 Dempsey Rd, #01-02, Singapore 249671*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=7%20Dempsey%20Rd,%20#01-02,%20Singapore%202494671&query_place_id=ChIJLZ9DYnIZ2jERQ51Am7WzJLM)**  
+
+2. **Leila Singapore**  
+    📍 *12 Teck Lim Rd, Singapore 088387*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=12%20Teck%20Lim%20Rd,%20Singapore%2088387&query_place_id=ChIJDyDiFuEZ2jERBuobsH0BAZE)**  
+
+3. **Kimchi Dining | Korean Restaurant Singapore**  
+    📍 *181 Orchard Rd, #06-10 Orchard Central Singapore 238896*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=181%20Orchard%20Rd,%20#06-10,%20Orchard%20Central,%20Singapore%20238896&query_place_id=ChIJSxaj9WgZ2jERRzKy45IsYl8)**  
+
+4. **Lazy Lizard Flora Vista**  
+    📍 *7 Ang Mo Kio Street 66 #01-09 & #01-12, Flora Vista, Singapore 567708*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=7%20Ang%20Mo%20Kio%20St%2066,%20#01-09%20-%20#01-12,%20Flora%20Vista,%20Singapore%20576708&query_place_id=ChIJ_W4jlTUX2jERTsCj3jMn0tM)**  
+
+5. **Eden Restaurant**  
+    📍 *270 Orchard Rd, Singapore 238857*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=270%20Orchard%20Rd,%20Singapore%20238857&query_place_id=ChIJO9op3n8Z2jERkJtP5VHiksg)**  
+
+</details>
+
+### 3. "Find the tastiest food spots in Chinatown, Singapore."
+<details>
+
+#### Screenshot of Chat Bubble:
+![Location Search Result](./assets/test_3.png)
+
+#### Response Markdown:
+Based on the provided context from the Google Maps Helper Tool, here are the top 5 results for "tastiest food spots in Chinatown, Singapore":
+
+1. 欢喜大排档｜HuanxiChineseRestaurant  
+    📍 *7 Mosque St, Singapore 059487*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2840536,103.84415260000002&query_place_id=ChIJw9DmRAAZ2jERxBnXOnMmxiI)**  
+
+2. Fortune Garden  
+    📍 *61 Pagoda St, MRT Exit A, Singapore 059220*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2834630999999999,103.84395959999999&query_place_id=ChIJsW6RkwYZ2jERPd7CCOsiCY8)**  
+
+3. Dong Bei Ren Jia  
+    📍 *22 Upper Cross St, Singapore 058334*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.283946,103.845344&query_place_id=ChIJL2lVrgwZ2jERGxnaLBvw9Zc)**  
+
+4. Chinatown Food Street  
+    📍 *41 Smith St, Singapore 058953*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2822896,103.84392799999999&query_place_id=ChIJY4OYJXMZ2jERq9aW_MKjwAc)**  
+
+5. Xiang Xiang Hunan Cuisine 湘香湖南菜 @ Chinatown  
+    📍 *8 Mosque St, #08/09/10, Singapore 059488*  
+    *(Static Map Image Redacted for Credential Security)*  
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2839725,103.84431579999999&query_place_id=ChIJz5q97wEZ2jERGSUsTLsiXiY)**  
+
+</details>
+
+### 4. "Give me directions from Marina Bay Sands to Changi Airport."
+<details>
+
+#### Screenshot of Chat Bubble:
+![Location Search Result](./assets/test_4.png)
+
+#### Response Markdown:
+To get directions from Marina Bay Sands to Changi Airport, the Google Maps Helper Tool suggests the following route:
+
+* **Start Address:** Marina Bay Sands
+* **End Address:** Changi Airport
+* **Estimated Distance:** 16.9 km
+* **Estimated Duration:** 15 mins
+
+The recommended route is available on Google Maps. You can view the detailed route and directions by clicking [View Route on Google Maps](https://www.google.com/maps/dir/?api=1&origin=Marina%20Bay%20Sands&destination=Changi%20Airport).
+
+</details>
+
+### 5. "Give me directions from JFK Airpot to New York Times Square."
+<details>
+
+#### Screenshot of Chat Bubble:
+![Location Search Result](./assets/test_5.png)
+
+#### Response Markdown:
+To get directions from JFK Airport to New York Times Square, I'll use the Google Maps Helper Tool to find the most efficient route.
+
+According to the tool's output:
+* **Start Address:** JFK Airport
+* **End Address:** New York Times Square
+* **Estimated Distance:** 15.5 miles
+* **Estimated Duration:** 45 minutes
+
+The recommended route from JFK Airport to New York Times Square is as follows: 
+
+[View Route on Google Maps](https://www.google.com/maps/dir/?api=1&origin=JFK%20Airport&destination=New%20York%20Times%20Square)
+
+</details>
