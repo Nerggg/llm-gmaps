@@ -82,45 +82,40 @@ To ensure that smaller local models (like `llama3.2:3b`) can process the complex
 
 ### Step 1: Import the Google Maps Helper Tool
 1. Open your browser and navigate to Open WebUI (default: `http://localhost:3000`).
-2. Click your profile icon in the bottom-left corner and go to **Workspace > Tools**.
-3. Click the **+** (or **Create Tool**) button in the top-right corner.
+2. Go to **Workspace > Models** in the left sidebar menu.
+3. Click the **Create** button in the top-right corner.
 4. Copy the complete code from `open-webui/google_maps_helper_tool.py` and paste it into the code editor.
-5. Click **Save** in the bottom-right corner.
+5. Click **Save & Create** in the bottom-right corner.
 
-### Step 2: Configure Advanced Model Parameters
-We need to increase the model's context window so it has enough space to read the system prompts and tool descriptions, and switch the function-calling pipeline to Legacy mode for higher compliance on smaller parameters.
+### Step 2: Create and Configure Your Model
+We need to configure the model's advanced parameters, bind our custom maps tool, and disable conflicting background capabilities so that everything runs reliably in a single, unified execution scope.
 
 1. Go to **Workspace > Models** in the left sidebar menu.
-2. Create new model and select the base model of your choice (e.g., `llama3.2`).
-3. Scroll down to the **Advanced Params** section.
-4. Locate **`num_ctx (Ollama)`** (Context Length) and change its value to **`8192`**.
-5. Locate **`Function Calling`** (or Tool Calling Mode) and switch it from *Native* (or *Default*) to **`Legacy`**.
-6. Click **Save** at the bottom of the model configuration page.
-
-### Step 3: Disable Conflicting Capabilities (Code Interpreter & Web Search)
-By default, Open WebUI might attempt to execute its own python scripts or general web search queries in the background, which can conflict with our custom tool. 
-
-#### A. Disable Code Execution:
-1. While still editing your model under **Workspace > Models**, look for the capabilities toggles.
-2. Find the **Code Execution** (or **Code Interpreter / IPython**) option and toggle it **OFF**. (This prevents the LLM from attempting to write and execute its own Python scripts in place of our API).
-3. Scroll down and click **Save**.
-
-#### B. Disable Global Web Search:
-1. Click your profile icon in the bottom-left corner and select **Admin Panel** (or **Admin Settings**).
-2. Click **Settings** on the left menu, and select the **Web Search** tab.
-3. Toggle the global **Enable Web Search** option to **OFF**. 
-4. Click **Save** at the bottom of the page.
+2. Click **Create** and select your base model of choice (e.g., `llama3.2`).
+3. Scroll down to the **Advanced Params** section:
+   * Locate **`num_ctx (Ollama)`** (Context Length) and change its value to **`8192`**. This gives the model enough token space to hold system instructions and tool definitions without truncation.
+   * Locate **`Function Calling`** and switch it from *Native* (or *Default*) to **`Legacy`**. This switches the model to prompt-based function execution, which is highly reliable for smaller local models.
+4. Scroll down to the **Tools** section:
+   * Click **Select Tool** and choose **`Google Maps Helper Tool`**. This binds the custom tool natively to this model.
+5. Scroll down to the **Capabilities** section:
+   * Locate **Code Interpreter** and **uncheck** it. This prevents the LLM from attempting to write and execute its own Python scripts in place of our API.
+   * Locate **Web Search** in the same list and **uncheck** it. This prevents Open WebUI's search engine from overriding our custom maps tool.
+6. Click **Save & Update** at the bottom of the model configuration page.
 
 ---
 
 ## Verification & Testing Guide
 
-Once the setup is complete, open a **New Chat**, click the **Tools** icon in the input area, ensure that the **Google Maps Helper Tool** is toggled **ON**, and test the following prompts:
+Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, ensure that the **Google Maps Helper Tool** is toggled **ON**, and test the following prompts:
 
 ### 1. Location Search Test
 * **Prompt:** *"Use the Google Maps Helper Tool to find popular food spots in Chinatown, Singapore and include the clickable Google Maps links."*
-* **Expected Result:** The backend sanitizes the prompt, queries Google Cloud, and returns accurate dining spots in Singapore's Chinatown (such as *Maxwell Food Centre*, *Liao Fan Hawker Chan*, or *Chinatown Complex Food Centre*). The output successfully renders interactive embedded map iframes and direct navigation links.
+* **Result:** 
+![Location Search Result](./assets/search_result.png)
+![Location Search Tool Call](./assets/search_tool_call.png)
 
 ### 2. Point-to-Point Directions Test
 * **Prompt:** *"Use the Google Maps Helper Tool to give me directions from Marina Bay Sands to Changi Airport."*
-* **Expected Result:** The model extracts the origin (`Marina Bay Sands`) and destination (`Changi Airport`), queries the `/api/directions` proxy, and returns the start address, end address, exact driving distance (approx. `19 km`), duration (approx. `18 mins`), and a direct universal navigation link.
+* **Result:** 
+![Location Direction Result](./assets/direction_result.png)
+![Location Direction Tool Call](./assets/direction_tool_call.png)
