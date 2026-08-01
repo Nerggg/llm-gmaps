@@ -31,12 +31,12 @@ class GoogleMapsService:
 
     async def get_directions_info(self, origin: str, destination: str) -> Optional[Dict[str, Any]]:
         """
-        Queries Google Routes API (New) to calculate precise travel details.
+        Queries Google Routes API (New) to calculate precise travel details and extracts the route polyline.
         """
         headers = {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": self.api_key,
-            "X-Goog-FieldMask": "routes.duration,routes.distanceMeters"
+            "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline"
         }
         
         payload = {
@@ -69,9 +69,12 @@ class GoogleMapsService:
                 except ValueError:
                     time_str = "Unknown"
                 
+                polyline = route.get("polyline", {}).get("encodedPolyline", "")
+                
                 return {
                     "distance": distance_str,
-                    "duration": time_str
+                    "duration": time_str,
+                    "polyline": polyline
                 }
             return None
 

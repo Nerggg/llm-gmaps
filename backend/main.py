@@ -126,12 +126,20 @@ async def get_directions(
         
         directions_url = f"https://www.google.com/maps/dir/?api=1&origin={safe_origin}&destination={safe_dest}"
         
+        static_map_url = None
+        if info and info.get("polyline"):
+            path_params = f"weight:5|color:blue|enc:{info['polyline']}"
+            safe_path = urllib.parse.quote(path_params)
+            
+            static_map_url = f"https://maps.googleapis.com/maps/api/staticmap?size=500x300&path={safe_path}&key={settings.GOOGLE_MAPS_CLIENT_KEY}"
+        
         if info:
             return {
                 "origin": sanitized_origin,
                 "destination": sanitized_dest,
                 "distance": info["distance"],
                 "duration": info["duration"],
+                "static_map_url": static_map_url,
                 "directions_url": directions_url
             }
             
@@ -140,6 +148,7 @@ async def get_directions(
             "destination": sanitized_dest,
             "distance": "Unknown",
             "duration": "Unknown",
+            "static_map_url": None,
             "directions_url": directions_url
         }
         

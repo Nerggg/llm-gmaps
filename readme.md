@@ -31,6 +31,13 @@ To ensure that the proxy API is completely secure against unauthorized external 
 * **Security Verification:** Every server-side endpoint requires a valid `X-API-Key` header matching the private `BACKEND_API_KEY` defined in the gateway `.env`.
 * **Tool-Level Handshake:** The Open WebUI tool initializes with this private credential and securely passes it inside the HTTP request headers during runtime, establishing a closed-loop trust boundary between your AI UI container and your API.
 
+### 5. Choosing Static Maps Over HTML Iframes (Visual UX & Security Tradeoff)
+The initial system architecture aimed to use Google's **Maps Embed API** to render interactive, client-side HTML `<iframe>` blocks inside the chat. However, this introduced a critical platform-level limitation:
+
+* **WebUI Security Sanitization (XSS Prevention):** For security against Cross-Site Scripting (XSS) attacks, Open WebUI's markdown parser (Markdown-it) explicitly sanitizes and strips out raw HTML `<iframe>` tags from the LLM's final conversational text responses, displaying them as unrendered raw code blocks.
+* **The Production Solution (Maps Static API):** To overcome this limitation and deliver a rich visual user experience directly inside the conversation, this project uses the **Maps Static API**. By returning flat `.png` images of search locations and computed driving route polylines, the tool can format the output using standard Markdown image syntax (`![Map Image](url)`). 
+* **Seamless Interactivity:** Open WebUI natively parses and renders Markdown images flawlessly inside conversational bubbles. To maintain complete maps interactivity, these static map previews are paired with highly visible, bold Markdown links pointing to Google's Universal redirect endpoints, enabling the user to launch the live, fully interactive Google Map in a separate browser tab with a single click.
+
 ---
 
 ## Step-by-Step Local Setup & Run Guide
@@ -101,11 +108,11 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
    ```text
 	You are an AI assistant equipped with a Google Maps Helper Tool. Whenever you use the tool to find locations:
 	1. You MUST use the exact telemetry (e.g., distance, duration, addresses) returned by the tool. Do not hallucinate directions.
-	2. For each location found, you MUST copy the exact Markdown image (e.g., '![Map of ...](...)') AND the clickable Markdown link (e.g., '[Open on Google Maps](...)') verbatim from the tool output into your final response. Never omit the map images or links.
+	2. For each location found or route computed, you MUST copy the exact Markdown images (e.g., '![Map of ...](...)' or '![Route Map](...)') AND the clickable Markdown links (e.g., '[Open on Google Maps](...)' or '[View Route on Google Maps](...)') verbatim from the tool output into your final response. Never omit the map images or links.
 	3. If the user asks for a subjective or live metric (such as "most crowded", "cheapest", "cleanest", or "best") that is not explicitly detailed in the tool's data, do not refuse to answer. Instead, present the top matching locations returned by the tool anyway, and add a polite disclaimer explaining that live occupancy, pricing, or subjective ratings are not directly available.
 	4. Treat each new query as a fresh request. Prioritize the locations returned by the most recent tool execution. Do not attempt to link, compare, or apologize for changes in location relative to previous conversation turns.
 	5. Do not wrap addresses or any other text details in square brackets. Write them as plain, standard text.
-   6. If the tool output is capped (e.g., the user asked for 10, but the tool only returned 5 and printed a warning), you MUST strictly stop at the number of results returned by the tool. Never guess, fabricate, or hallucinate additional locations, and never recycle coordinates or Place IDs from other places to meet the user's requested numeric limit.
+	6. If the tool output is capped (e.g., the user asked for 10, but the tool only returned 5 and printed a warning), you MUST strictly stop at the number of results returned by the tool. Never guess, fabricate, or hallucinate additional locations, and never recycle coordinates or Place IDs from other places to meet the user's requested numeric limit.
    ```
 4. Scroll down to the **Advanced Params** section:
    * Locate **`num_ctx (Ollama)`** (Context Length) and change its value to **`8192`**. This gives the model enough token space to hold system instructions and tool definitions without truncation.
@@ -239,14 +246,18 @@ Based on the provided context from the Google Maps Helper Tool, here are the top
 ![Location Search Result](./assets/test_4.png)
 
 #### Response Markdown:
-To get directions from Marina Bay Sands to Changi Airport, the Google Maps Helper Tool suggests the following route:
+*According to the Google Maps Helper Tool, here are the directions from Marina Bay Sands to Changi Airport.*
 
-* **Start Address:** Marina Bay Sands
-* **End Address:** Changi Airport
-* **Estimated Distance:** 16.9 km
-* **Estimated Duration:** 15 mins
+**Start Address:** Marina Bay Sands  
+**End Address:** Changi Airport  
+**Estimated Distance:** 16.9 km  
+**Estimated Duration:** 15 mins  
 
-The recommended route is available on Google Maps. You can view the detailed route and directions by clicking [View Route on Google Maps](https://www.google.com/maps/dir/?api=1&origin=Marina%20Bay%20Sands&destination=Changi%20Airport).
+[View Route on Google Maps](https://www.google.com/maps/dir/?api=1&origin=Marina%20Bay%20Sands&destination=Changi%20Airport)
+
+*(Static Map Image Redacted for Credential Security)*  
+
+Please note that the estimated duration is 15 minutes, and the route map image and link are presented verbatim as requested.
 
 </details>
 
@@ -257,16 +268,17 @@ The recommended route is available on Google Maps. You can view the detailed rou
 ![Location Search Result](./assets/test_5.png)
 
 #### Response Markdown:
-To get directions from JFK Airport to New York Times Square, I'll use the Google Maps Helper Tool to find the most efficient route.
+According to the **google_maps_helper_tool/get_directions**, here are the directions from John F. Kennedy International Airport (JFK), Queens, NY to New York Times Square, Manhattan, NY:
 
-According to the tool's output:
-* **Start Address:** JFK Airport
-* **End Address:** New York Times Square
-* **Estimated Distance:** 15.5 miles
-* **Estimated Duration:** 45 minutes
+* **Start Address:** John F. Kennedy International Airport, Queens, NY
+* **End Address:** New York Times Square, Manhattan, NY
+* **Estimated Distance:** 26.8 km
+* **Estimated Duration:** 39 mins
 
-The recommended route from JFK Airport to New York Times Square is as follows: 
+*(Static Map Image Redacted for Credential Security)*  
 
-[View Route on Google Maps](https://www.google.com/maps/dir/?api=1&origin=JFK%20Airport&destination=New%20York%20Times%20Square)
+[View Route on Google Maps](https://www.google.com/maps/dir/?api=1&origin=John%20F.%20Kennedy%20International%20Airport%2C%20Queens%2C%20NY&destination=New%20York%20Times%20Square%2C%20Manhattan%2C%20NY)
+
+You can view the route map by clicking on the link above.
 
 </details>
