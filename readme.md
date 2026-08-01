@@ -1,54 +1,58 @@
 # Google Maps Proxy Gateway & AI Agent for Open WebUI
 
-This repository contains a secure, production-grade integration between a local LLM running in Open WebUI and the Google Maps Platform, utilizing the modern **Places API** and **Routes API**.
+This repository integrates a local LLM running in Open WebUI with the Google Maps Platform, using the **Places API** and **Routes API**.
 
-The project implements a **Secure Backend Proxy Gateway** pattern using FastAPI to shield sensitive API credentials, apply server-side rate limits, implement a local TTL cache for cost optimization, and sanitize inputs before querying Google services.
+A FastAPI backend sits between the LLM and Google's APIs to shield credentials, apply rate limits, cache repeat queries, and sanitize inputs before they reach Google.
+
+---
+
+## Prerequisites
+
+- Python 3.10+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Ollama](https://ollama.com/) installed locally, with a model pulled (e.g. `ollama pull llama3.2`)
+- A Google Cloud project with billing enabled and the **Places API (New)** and **Routes API (New)** enabled
 
 ---
 
 ## System Architecture & Security Decisions
 
-### 1. The Secure Backend Proxy Pattern
-In basic agent workflows, LLMs or custom tools are sometimes configured to query third-party APIs directly from the client. However, this model introduces several production risks:
-* **Credential Exposure:** Hardcoded API keys are easily sniffed by inspecting client-side network traffic or source code.
-* **Lack of Cost & Rate Control:** An LLM caught in a recursive loop could trigger thousands of rapid API requests, causing unexpected billing spikes.
-* **No Input Filtering:** Natural language inputs from users can contain conflicting tokens (like "near me") that pollute geocoding accuracy.
+### 1. Backend Proxy Pattern
 
-By building a lightweight **FastAPI proxy gateway**, we maintain full control over outgoing traffic, sanitize user inputs defensively, cache queries locally, and restrict external API access.
+Calling Google's APIs directly from the client would expose API keys, remove rate control, and pass unfiltered natural-language input straight to Google. Instead, all traffic routes through a FastAPI proxy that sanitizes input, caches results, and restricts what gets sent externally.
 
-### 2. Two-Key Security Architecture
-To render interactive client-side map embeds while protecting sensitive background services, this project implements a **Two-Key Architecture**:
+### 2. Two-Key Architecture
 
-* **Private Server Key (`GOOGLE_MAPS_SERVER_KEY`):** Kept strictly on the backend host in `.env`. It is **never** sent to the client browser. It is restricted in your Google Cloud Console strictly to the **Places API (New)** and **Routes API (New)**, with no application referrer restrictions (as server-side calls do not send HTTP referrers).
-* **Public Client Key (`GOOGLE_MAPS_CLIENT_KEY`):** Exposed inside the standard Markdown image URLs (`![map](...)`) returned to the user's browser so Google can generate static map previews. To prevent abuse, this key is restricted in your Google Cloud Console strictly to the **Maps Static API** with HTTP Referrer constraints limited strictly to your Open WebUI domains (`http://localhost:3000/*`). If this key is stolen, it cannot be used to run expensive coordinates or routing searches on other domains.
+* **Private Server Key (`GOOGLE_MAPS_SERVER_KEY`):** Stays on the backend host in `.env`, never sent to the browser. Restricted in Google Cloud Console to the **Places API (New)** and **Routes API**. Since server-side calls don't send an HTTP referrer, this key should be restricted by **IP address** in the Cloud Console rather than left unrestricted — recommended as the next hardening step if not already configured.
+* **Public Client Key (`GOOGLE_MAPS_CLIENT_KEY`):** Used in Markdown image URLs (`![map](...)`) so the browser can render static map previews. Restricted to the **Maps Static API** with HTTP referrer restrictions limited to the Open WebUI domain (`http://localhost:3000/*`). If exposed, it can't be used for search or routing calls elsewhere.
 
-### 3. Defensive Parameter Sanitization & Caching
-* **The "Near Me" Fail-Safe:** Small local models (like `llama3.2:3b`) often struggle with negative constraints and will append phrases like "near me" to search terms. The backend utilizes a case-insensitive regex pattern to automatically strip out `"near me"` before queries are sent to Google, ensuring precise geographic search results.
-* **Local TTL Cache:** A thread-safe, in-memory Time-To-Live (TTL) cache intercepts incoming searches. If an LLM or user repeats a query within 30 minutes, it is served instantly from local memory, keeping Google Cloud billing overhead minimal.
+### 3. Input Sanitization & Caching
 
-### 4. First-Party Proxy Authentication (Gateway Security)
-To ensure that the proxy API is completely secure against unauthorized external access (preventing anyone on the local network from abusing your Google Maps credits), the proxy implements an **API Key Header validation** (`X-API-Key`):
-* **Security Verification:** Every server-side endpoint requires a valid `X-API-Key` header matching the private `BACKEND_API_KEY` defined in the gateway `.env`.
-* **Tool-Level Handshake:** The Open WebUI tool initializes with this private credential and securely passes it inside the HTTP request headers during runtime, establishing a closed-loop trust boundary between your AI UI container and your API.
+* **"Near me" stripping:** Small local models (e.g. `llama3.2:3b`) often append "near me" even when a city or address is already specified. A regex strips this before the query reaches Google.
+* **TTL Cache:** An in-memory cache (30 min TTL) serves repeat queries without re-hitting the Google API, reducing billing overhead.
 
-### 5. Choosing Static Maps Over HTML Iframes (Visual UX & Security Tradeoff)
-The initial system architecture aimed to use Google's **Maps Embed API** to render interactive, client-side HTML `<iframe>` blocks inside the chat. However, this introduced a critical platform-level limitation:
+### 4. Gateway Authentication
 
-* **WebUI Security Sanitization (XSS Prevention):** For security against Cross-Site Scripting (XSS) attacks, Open WebUI's markdown parser (Markdown-it) explicitly sanitizes and strips out raw HTML `<iframe>` tags from the LLM's final conversational text responses, displaying them as unrendered raw code blocks.
-* **The Production Solution (Maps Static API):** To overcome this limitation and deliver a rich visual user experience directly inside the conversation, this project uses the **Maps Static API**. By returning flat `.png` images of search locations and computed driving route polylines, the tool can format the output using standard Markdown image syntax (`![Map Image](url)`). 
-* **Seamless Interactivity:** Open WebUI natively parses and renders Markdown images flawlessly inside conversational bubbles. To maintain complete maps interactivity, these static map previews are paired with highly visible, bold Markdown links pointing to Google's Universal redirect endpoints, enabling the user to launch the live, fully interactive Google Map in a separate browser tab with a single click.
+Every backend endpoint requires an `X-API-Key` header matching `BACKEND_API_KEY` in `.env`. The Open WebUI tool sends this key with every request, so the proxy can't be hit by anything else on the local network.
+
+### 5. Static Maps Instead of Embedded Iframes
+
+The original plan was to render interactive `<iframe>` map embeds via Google's Maps Embed API. This doesn't work here: Open WebUI's markdown parser strips raw `<iframe>` tags from LLM responses as an XSS precaution, so embeds get rendered as inert code blocks instead of maps.
+
+The workaround is the **Maps Static API** — flat `.png` map images returned as standard Markdown images (`![map](url)`), which Open WebUI renders natively inline. Each image is paired with a link to the live, interactive Google Maps page, so the interactive map is always one click away even though nothing is embedded and pannable in-chat.
 
 ---
 
 ## Step-by-Step Local Setup & Run Guide
 
 ### Step 1: Clone the Repository & Configure Environment
+
 1. Clone this repository:
    ```bash
    git clone git@github.com:Nerggg/llm-gmaps.git
    cd llm-gmaps
    ```
-2. Create a `.env` file in your `backend/` directory:
+2. Create a `.env` file in `backend/`:
    ```bash
    cp backend/.env.example backend/.env
    ```
@@ -57,24 +61,28 @@ The initial system architecture aimed to use Google's **Maps Embed API** to rend
    PORT=8000
    GOOGLE_MAPS_SERVER_KEY=AIzaSy_YOUR_PRIVATE_SERVER_KEY
    GOOGLE_MAPS_CLIENT_KEY=AIzaSy_YOUR_PUBLIC_CLIENT_KEY
+   BACKEND_API_KEY=replace_with_your_own_random_token
    ```
+   > Don't leave `BACKEND_API_KEY` at any example/default value — generate a real random token (e.g. `openssl rand -hex 32`).
 
 ### Step 2: Initialize and Start the Backend Proxy
-1. Navigate to the backend directory, initialize a Python virtual environment, and install the dependencies:
+
+1. Navigate to the backend directory, create a virtual environment, and install dependencies:
    ```bash
    cd backend
    python -m venv venv
    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
    pip install -r requirements.txt
    ```
-2. Go back to the **project root directory** and run the FastAPI backend:
+2. From the **project root**, run the FastAPI backend:
    ```bash
    cd ..
    uvicorn backend.main:app --reload --port 8000
    ```
 
 ### Step 3: Launch Open WebUI via Docker
-With your local Ollama instance running (`ollama run llama3.2`), launch Open WebUI in a Docker container. The `--add-host` parameter ensures that the container can communicate back to your local machine's port 8000:
+
+With Ollama running locally (`ollama run llama3.2`), launch Open WebUI. `--add-host` lets the container reach your host machine's port 8000:
 
 ```bash
 docker run -d -p 3000:8080 \
@@ -90,21 +98,21 @@ docker run -d -p 3000:8080 \
 
 ## Open WebUI & Model Configuration Guide
 
-To ensure that smaller local models (like `llama3.2:3b`) can process the complex tool definitions and execute functions reliably without hitting local context limitations or attempting to run raw code, follow these configuration steps in your Open WebUI dashboard.
+Smaller local models (e.g. `llama3.2:3b`) need some configuration to reliably process tool definitions without truncation or attempting to run raw code.
 
 ### Step 1: Import the Google Maps Helper Tool
-1. Open your browser and navigate to Open WebUI (default: `http://localhost:3000`).
-2. Go to **Workspace > Models** in the left sidebar menu.
-3. Click the **Create** button in the top-right corner.
-4. Copy the complete code from `open-webui/google_maps_helper_tool.py` and paste it into the code editor.
-5. Click **Save & Create** in the bottom-right corner.
+
+1. Open Open WebUI (default: `http://localhost:3000`).
+2. Go to **Workspace > Models**.
+3. Click **Create**.
+4. Paste the contents of `open-webui/google_maps_helper_tool.py` into the code editor.
+5. Click **Save & Create**.
 
 ### Step 2: Create and Configure Your Model
-We need to configure the model's advanced parameters, bind our custom maps tool, and disable conflicting background capabilities so that everything runs reliably in a single, unified execution scope.
 
-1. Go to **Workspace > Models** in the left sidebar menu.
-2. Click **Create** and select your base model of choice (e.g., `llama3.2`).
-3. Locate the **System Prompt** text area and paste the following configuration:
+1. Go to **Workspace > Models**.
+2. Click **Create** and select a base model (e.g. `llama3.2`).
+3. In **System Prompt**, paste:
    ```text
 	You are an AI assistant equipped with a Google Maps Helper Tool. Whenever you use the tool to find locations:
 	1. You MUST use the exact telemetry (e.g., distance, duration, addresses) returned by the tool. Do not hallucinate directions.
@@ -114,25 +122,18 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 	5. Do not wrap addresses or any other text details in square brackets. Write them as plain, standard text.
 	6. If the tool output is capped (e.g., the user asked for 10, but the tool only returned 5 and printed a warning), you MUST strictly stop at the number of results returned by the tool. Never guess, fabricate, or hallucinate additional locations, and never recycle coordinates or Place IDs from other places to meet the user's requested numeric limit.
    ```
-4. Scroll down to the **Advanced Params** section:
-   * Locate **`num_ctx (Ollama)`** (Context Length) and change its value to **`8192`**. This gives the model enough token space to hold system instructions and tool definitions without truncation.
-   * Locate **`Function Calling`** and switch it from *Native* (or *Default*) to **`Legacy`**. This switches the model to prompt-based function execution, which is highly reliable for smaller local models.
-5. Scroll down to the **Tools** section:
-   * Click **Select Tool** and choose **`Google Maps Helper Tool`**. This binds the custom tool natively to this model.
-6. Scroll down to the **Capabilities** section:
-   * Locate **Code Interpreter** and **uncheck** it. This prevents the LLM from attempting to write and execute its own Python scripts in place of our API.
-   * Locate **Web Search** in the same list and **uncheck** it. This prevents Open WebUI's search engine from overriding our custom maps tool.
-7. Click **Save & Update** at the bottom of the model configuration page.
+4. Under **Advanced Params**:
+   * Set **`num_ctx (Ollama)`** to **`8192`** so the model has enough context for the system prompt and tool definitions.
+   * Set **Function Calling** to **`Legacy`** — more reliable for smaller local models than native function calling.
+5. Under **Tools**, select **`Google Maps Helper Tool`**.
+6. Under **Capabilities**, uncheck **Code Interpreter** (prevents the model from trying to script around the tool) and **Web Search** (prevents it from overriding the maps tool).
+7. Click **Save & Update**.
 
 ---
 
 ## Verification & Testing Guide
 
-Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, and ensure that the **Google Maps Helper Tool** is toggled **ON**. 
-
-All local evaluations, log captures, and screenshots below were generated using **`llama3.2:3b`**. Due to the strict memory and parameter constraints of a 3B model, some conversational summaries, formatting structures, or transitions may occasionally exhibit minor quirks compared to larger, resource-heavy cloud models (like Claude or GPT-4). These tests demonstrate how our backend proxy and tool-level defensive constraints keep the agent fully aligned, safe, and functional even under lightweight local resource limitations.
-
-These are examples of the prompts and their results:
+Open a new chat, select the configured model, and make sure the **Google Maps Helper Tool** is toggled on. All screenshots below were captured using `llama3.2:3b`. As a small model, it can occasionally introduce minor formatting inconsistencies, and — as noted in Known Limitations below — can sometimes state details not present in the tool's actual output.
 
 ### 1. "Find 4 popular parks in Seoul."
 <details>
@@ -304,3 +305,12 @@ According to the **google_maps_helper_tool/get_directions**, here are the direct
 You can view the route map by clicking on the link above.
 
 </details>
+
+---
+
+## Known Limitations
+
+- **No automated test suite.** Verification here was manual, via the transcripts and screenshots above.
+- **No true embedded interactive map.** Results are static images plus a link, not a pannable in-chat map — see Section 5 for why.
+- **Small local models can state details not present in tool output** despite explicit system-prompt instructions against it. Larger models or stricter output validation would reduce this.
+- **Rate limiting is per-IP**, but since all requests arrive via the same Docker gateway address, this guards against runaway request loops more than against abuse from multiple distinct users.
