@@ -65,7 +65,7 @@ The initial system architecture aimed to use Google's **Maps Embed API** to rend
    cd backend
    python -m venv venv
    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-   pip install fastapi uvicorn httpx python-dotenv slowapi pydantic
+   pip install -r requirements.txt
    ```
 2. Go back to the **project root directory** and run the FastAPI backend:
    ```bash
