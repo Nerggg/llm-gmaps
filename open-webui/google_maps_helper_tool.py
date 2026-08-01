@@ -13,18 +13,34 @@ class Tools:
     def __init__(self):
         self.backend_url = "http://host.docker.internal:8000"
 
-    async def search_places(self, query: str) -> str:
+    async def search_places(self, query: str, limit: int = 3) -> str:
         """
         Search for restaurants, cafes, attractions, hotels, or any points of interest.
         Only use this tool to locate places or answer "where" questions.
         CRITICAL: Pass the user's requested location exactly as written. Do not append "near me" if the user has already specified a city, district, or address in their prompt.
         :param query: The search query (e.g., 'Sushi in Bandung' or 'coffee shops near me').
-        :return: Markdown details and interactive map iframes for matched places.
+        :param limit: The maximum number of places to return (default is 3). Pass the exact count if the user requested a specific number of places (e.g., if the user asks for 5 places, limit should be 5).
+        :return: Markdown details and interactive map images for matched places.
         """
         try:
-            # Defensive guard for empty queries
+            # defensive guard for empty queries
             if not query or len(query.strip()) < 2:
                 return "Please provide a valid search query of at least 2 characters."
+
+            # 2. convert limit to an integer and apply a defensive cap (between 1 and 5)
+            warning_msg = ""
+            try:
+                original_limit = int(limit)
+                safe_limit = max(1, min(original_limit, 5))
+                
+                # if the user (or llm) requested more than 5, generate the notice
+                if original_limit > 5:
+                    warning_msg = (
+                        "NOTICE TO ASSISTANT: The user requested more than 5 results, but we have capped the output at 5 to prevent the response from getting too long. "
+                        "You MUST begin your final response by stating this exact limit notice to the user in a friendly way.\n\n"
+                    )
+            except (ValueError, TypeError):
+                safe_limit = 3
 
             url = f"{self.backend_url}/api/search"
             params = {"query": query}
@@ -40,9 +56,9 @@ class Tools:
                 if not results:
                     return f"No results found for '{query}'."
 
-                markdown_out = f"### Found places matching '{query}':\n\n"
+                markdown_out = f"{warning_msg}### Found places matching '{query}':\n\n"
 
-                for i, place in enumerate(results[:3], 1):
+                for i, place in enumerate(results[:safe_limit], 1):
                     name = place.get("name")
                     address = place.get("address")
                     static_url = place.get("static_map_url")
@@ -50,16 +66,12 @@ class Tools:
 
                     markdown_out += f"**{i}. {name}**\n"
                     markdown_out += f"📍 *{address}*\n\n"
+                    
                     if static_url:
                         markdown_out += f"![Map of {name}]({static_url})\n\n"
+                    
                     markdown_out += f"🔗 **[Open on Google Maps]({direct_url})**\n\n"
                     markdown_out += "---\n\n"
-
-                markdown_out += (
-                    "\n\n*SYSTEM NOTE TO ASSISTANT: You MUST present the markdown map images (![Map of...](...)) "
-                    "and the bold [Open on Google Maps] links verbatim in your final reply for each location. "
-                    "Do not summarize, do not shorten, and do not omit them under any circumstances.*"
-                )
 
                 return markdown_out
 
@@ -74,7 +86,6 @@ class Tools:
         :param destination: The destination place name or address exactly as provided by the user. Do NOT attempt to guess, expand, or resolve the street address yourself.
         :return: Markdown details showing estimated distance, time, and navigation URL.
         """
-        # Defensive check to prevent small models from calling with empty strings
         if (
             not origin
             or not destination
@@ -98,14 +109,14 @@ class Tools:
                 dur = data.get("duration", "Unknown")
                 directions_url = data.get("directions_url")
 
-                markdown_out = f"### 🚗 Routing Details:\n\n"
+                markdown_out = f"###Routing Details:\n\n"
                 markdown_out += f"* **Start Address:** {data.get('origin', origin)}\n"
                 markdown_out += (
                     f"* **End Address:** {data.get('destination', destination)}\n"
                 )
                 markdown_out += f"* **Estimated Distance:** {dist}\n"
                 markdown_out += f"* **Estimated Duration:** {dur}\n\n"
-                markdown_out += f"👉 [View Route on Google Maps]({directions_url})\n\n"
+                markdown_out += f"[View Route on Google Maps]({directions_url})\n\n"
 
                 return markdown_out
 

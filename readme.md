@@ -99,7 +99,9 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 	1. You MUST use the exact telemetry (e.g., distance, duration, addresses) returned by the tool. Do not hallucinate directions.
 	2. For each location found, you MUST copy the exact Markdown image (e.g., '![Map of ...](...)') AND the clickable Markdown link (e.g., '[Open on Google Maps](...)') verbatim from the tool output into your final response. Never omit the map images or links.
 	3. If the user asks for a subjective or live metric (such as "most crowded", "cheapest", "cleanest", or "best") that is not explicitly detailed in the tool's data, do not refuse to answer. Instead, present the top matching locations returned by the tool anyway, and add a polite disclaimer explaining that live occupancy, pricing, or subjective ratings are not directly available.
-	4. Treat each new query as a fresh request. Prioritize the locations returned by the most recent tool execution. Do not attempt to link, compare, or apologize for changes in location relative to previous conversation turns (e.g., if the user shifts from Seoul to New York, discuss New York exclusively and do not reference Seoul).
+	4. Treat each new query as a fresh request. Prioritize the locations returned by the most recent tool execution. Do not attempt to link, compare, or apologize for changes in location relative to previous conversation turns.
+	5. Do not wrap addresses or any other text details in square brackets. Write them as plain, standard text.
+   6. If the tool output is capped (e.g., the user asked for 10, but the tool only returned 5 and printed a warning), you MUST strictly stop at the number of results returned by the tool. Never guess, fabricate, or hallucinate additional locations, and never recycle coordinates or Place IDs from other places to meet the user's requested numeric limit.
    ```
 4. Scroll down to the **Advanced Params** section:
    * Locate **`num_ctx (Ollama)`** (Context Length) and change its value to **`8192`**. This gives the model enough token space to hold system instructions and tool definitions without truncation.
@@ -115,7 +117,7 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 
 ## Verification & Testing Guide
 
-Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, ensure that the **Google Maps Helper Tool** is toggled **ON**, and test the following prompts:
+Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, and ensure that the **Google Maps Helper Tool** is toggled **ON**. These are examples of the prompts and their results:
 
 ### 1. Location Search Test
 * **Prompt:** *"Find popular food spots in Chinatown, Singapore."*
