@@ -78,6 +78,7 @@ async def search_places(request: Request, query: str = Query(..., min_length=2))
             lng = place.get("location", {}).get("longitude")
             
             # formulate the google maps embed and direct urls
+            static_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=15&size=500x300&markers=color:red%7C{lat},{lng}&key={settings.GOOGLE_MAPS_CLIENT_KEY}"
             embed_url = f"https://www.google.com/maps/embed/v1/place?key={settings.GOOGLE_MAPS_CLIENT_KEY}&q=place_id:{place_id}"
             view_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}&query_place_id={place_id}"
             
@@ -86,6 +87,7 @@ async def search_places(request: Request, query: str = Query(..., min_length=2))
                 "name": name,
                 "address": address,
                 "coordinates": {"lat": lat, "lng": lng},
+                "static_map_url": static_url,
                 "embed_map_url": embed_url,
                 "direct_map_url": view_url
             })

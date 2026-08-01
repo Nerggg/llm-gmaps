@@ -45,12 +45,21 @@ class Tools:
                 for i, place in enumerate(results[:3], 1):
                     name = place.get("name")
                     address = place.get("address")
+                    static_url = place.get("static_map_url")
                     direct_url = place.get("direct_map_url")
 
                     markdown_out += f"**{i}. {name}**\n"
                     markdown_out += f"📍 *{address}*\n\n"
+                    if static_url:
+                        markdown_out += f"![Map of {name}]({static_url})\n\n"
                     markdown_out += f"🔗 **[Open on Google Maps]({direct_url})**\n\n"
                     markdown_out += "---\n\n"
+
+                markdown_out += (
+                    "\n\n*SYSTEM NOTE TO ASSISTANT: You MUST present the markdown map images (![Map of...](...)) "
+                    "and the bold [Open on Google Maps] links verbatim in your final reply for each location. "
+                    "Do not summarize, do not shorten, and do not omit them under any circumstances.*"
+                )
 
                 return markdown_out
 
@@ -61,8 +70,8 @@ class Tools:
         """
         Calculate travel route, distance, and duration between two specific locations.
         CRITICAL: Only call this tool if the user explicitly asks for routes, distance, or directions, AND provides BOTH a starting point and a destination. Do not guess parameters.
-        :param origin: The exact starting address or place name.
-        :param destination: The exact destination address or place name.
+        :param origin: The starting place name or address exactly as provided by the user. Do NOT attempt to guess, expand, or resolve the street address yourself.
+        :param destination: The destination place name or address exactly as provided by the user. Do NOT attempt to guess, expand, or resolve the street address yourself.
         :return: Markdown details showing estimated distance, time, and navigation URL.
         """
         # Defensive check to prevent small models from calling with empty strings
