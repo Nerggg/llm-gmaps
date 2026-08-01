@@ -116,7 +116,11 @@ We need to configure the model's advanced parameters, bind our custom maps tool,
 
 ## Verification & Testing Guide
 
-Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, and ensure that the **Google Maps Helper Tool** is toggled **ON**. These are examples of the prompts and their results:
+Once the setup is complete, open a **New Chat**, choose the newly created model as the chat model, and ensure that the **Google Maps Helper Tool** is toggled **ON**. 
+
+All local evaluations, log captures, and screenshots below were generated using **`llama3.2:3b`**. Due to the strict memory and parameter constraints of a 3B model, some conversational summaries, formatting structures, or transitions may occasionally exhibit minor quirks compared to larger, resource-heavy cloud models (like Claude or GPT-4). These tests demonstrate how our backend proxy and tool-level defensive constraints keep the agent fully aligned, safe, and functional even under lightweight local resource limitations.
+
+These are examples of the prompts and their results:
 
 ### 1. "Find 4 popular parks in Seoul."
 <details>
