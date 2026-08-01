@@ -141,27 +141,27 @@ These are examples of the prompts and their results:
 ![Location Search Result](./assets/test_1.png)
 
 #### Response Markdown:
-Here are 4 popular parks in Seoul:
+Here are four popular parks in Seoul:
 
 1. **Yeouido Hangang Park**  
     📍 *330 Yeouidong-ro, Yeongdeungpo District, Seoul, South Korea*  
-    *(Static Map Image Redacted for Credential Security)*  
+    *(Static Map Image Redacted for Credential Security)*    
     🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.5267106,126.9347112&query_place_id=ChIJ77fEAzuffDURLEWNv56G2KQ)**  
 
-2. **Seoul Forest Park**  
+2. **Seoul Forest Park**   
     📍 *273 Ttukseom-ro, Seongdong-gu, Seoul, South Korea*  
-    *(Static Map Image Redacted for Credential Security)*  
+    *(Static Map Image Redacted for Credential Security)*    
     🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.544387799999996,127.03744239999999&query_place_id=ChIJK_b0UX2jfDURmkYPvmWYm90)**  
 
-3. **Namsan Mountain Park**  
+3. **Namsan Mountain Park**   
     📍 *231 Samil-daero, Jung District, Seoul, South Korea*  
-    *(Static Map Image Redacted for Credential Security)*  
+    *(Static Map Image Redacted for Credential Security)*    
     🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.5509895,126.99089910000001&query_place_id=ChIJm3V0fu2ifDURL5X2_nPOeVQ)**  
 
-4. **Haneul Park**  
-    📍 *95 Haneulgongwon-ro, Mapo-gu, Seoul, South Korea*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.5674533,126.8854782&query_place_id=ChIJX2GTuVJFezURGK4FSyWdbak)**  
+4. **Naksan Park**   
+    📍 *41 Naksan-gil, Jongno District, Seoul, South Korea*    
+    *(Static Map Image Redacted for Credential Security)*    
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=37.580657099999996,127.00748349999999&query_place_id=ChIJ6RPSci2jfDURXTSdf7JjYp8)**  
 
 </details>
 
@@ -172,34 +172,42 @@ Here are 4 popular parks in Seoul:
 ![Location Search Result](./assets/test_2.png)
 
 #### Response Markdown:
-**Notice to User:** We have capped the output at 5 results to prevent the response from getting too long.
+We found 5 crowded restaurants in Singapore for you.
 
-We were unable to find more than 5 crowded restaurants in Singapore within our search capabilities. However, here are the top 5 places matching your query:
-
-1. **Burnt Ends**  
-    📍 *7 Dempsey Rd, #01-02, Singapore 249671*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=7%20Dempsey%20Rd,%20#01-02,%20Singapore%202494671&query_place_id=ChIJLZ9DYnIZ2jERQ51Am7WzJLM)**  
-
-2. **Leila Singapore**  
+**1. Leila Singapore**  
     📍 *12 Teck Lim Rd, Singapore 088387*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=12%20Teck%20Lim%20Rd,%20Singapore%2088387&query_place_id=ChIJDyDiFuEZ2jERBuobsH0BAZE)**  
+    *(Static Map Image Redacted for Credential Security)*    
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=12+Teck+Lim+Rd,+Singapore+088387&query_place_id=ChIJDyDiFuEZ2jERBuobsH0BAZE)**  
 
-3. **Kimchi Dining | Korean Restaurant Singapore**  
-    📍 *181 Orchard Rd, #06-10 Orchard Central Singapore 238896*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=181%20Orchard%20Rd,%20#06-10,%20Orchard%20Central,%20Singapore%20238896&query_place_id=ChIJSxaj9WgZ2jERRzKy45IsYl8)**  
+---
 
-4. **Lazy Lizard Flora Vista**  
-    📍 *7 Ang Mo Kio Street 66 #01-09 & #01-12, Flora Vista, Singapore 567708*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=7%20Ang%20Mo%20Kio%20St%2066,%20#01-09%20-%20#01-12,%20Flora%20Vista,%20Singapore%20576708&query_place_id=ChIJ_W4jlTUX2jERTsCj3jMn0tM)**  
+**2. KOMA Singapore**  
+    📍 *10 Bayfront Ave, B1-67 The Shoppes, Marina Bay Sands, Singapore 018956*  
+    *(Static Map Image Redacted for Credential Security)*    
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=10+Bayfront+Ave,+Singapore+018956&query_place_id=ChIJFzUYYm8Z2jERs4gjq8fcHCA)**  
 
-5. **Eden Restaurant**  
+---
+
+**3. Burnt Ends**  
+    📍 *7 Dempsey Rd, #01-02, Singapore 249671*  
+    *(Static Map Image Redacted for Credential Security)*    
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=7+Dempsey+Rd,+Singapore+249671&query_place_id=ChIJLZ9DYnIZ2jERQ51Am7WzJLM)**  
+
+---
+
+**4. Eden Restaurant**  
     📍 *270 Orchard Rd, Singapore 238857*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=270%20Orchard%20Rd,%20Singapore%20238857&query_place_id=ChIJO9op3n8Z2jERkJtP5VHiksg)**  
+    *(Static Map Image Redacted for Credential Security)*    
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=270+Orchard+Rd,+Singapore+238857&query_place_id=ChIJO9op3n8Z2jERkJtP5VHiksg)**  
+
+---
+
+**5. Kimchi Dining | Korean Restaurant Singapore**  
+    📍 *181 Orchard Rd, #06-10 Orchard Central Singapore 238896*  
+    *(Static Map Image Redacted for Credential Security)*    
+    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=181+Orchard+Rd,+#06-10+Orchard+Central,+Singapore+238896&query_place_id=ChIJSxaj9WgZ2jERRzKy45IsYl8)**  
+
+**Note:** We have capped the output at 5 results to prevent the response from getting too long.
 
 </details>
 
@@ -210,32 +218,46 @@ We were unable to find more than 5 crowded restaurants in Singapore within our s
 ![Location Search Result](./assets/test_3.png)
 
 #### Response Markdown:
-Based on the provided context from the Google Maps Helper Tool, here are the top 5 results for "tastiest food spots in Chinatown, Singapore":
+### Response to User Query:
 
-1. 欢喜大排档｜HuanxiChineseRestaurant  
-    📍 *7 Mosque St, Singapore 059487*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2840536,103.84415260000002&query_place_id=ChIJw9DmRAAZ2jERxBnXOnMmxiI)**  
+The user has asked for recommendations on the tastiest food spots in Chinatown, Singapore.
 
-2. Fortune Garden  
-    📍 *61 Pagoda St, MRT Exit A, Singapore 059220*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2834630999999999,103.84395959999999&query_place_id=ChIJsW6RkwYZ2jERPd7CCOsiCY8)**  
+To answer this query, we will rely on information from the Google Maps Helper Tool provided earlier. The tool returned three locations matching the search term.
 
-3. Dong Bei Ren Jia  
-    📍 *22 Upper Cross St, Singapore 058334*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.283946,103.845344&query_place_id=ChIJL2lVrgwZ2jERGxnaLBvw9Zc)**  
+#### 1. 欢喜大排档｜HuanxiChineseRestaurant
+This restaurant is located at 7 Mosque St, Singapore 059487.
 
-4. Chinatown Food Street  
-    📍 *41 Smith St, Singapore 058953*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2822896,103.84392799999999&query_place_id=ChIJY4OYJXMZ2jERq9aW_MKjwAc)**  
+According to the Google Maps data, it has an average rating of [4.5] stars on Google Reviews.
 
-5. Xiang Xiang Hunan Cuisine 湘香湖南菜 @ Chinatown  
-    📍 *8 Mosque St, #08/09/10, Singapore 059488*  
-    *(Static Map Image Redacted for Credential Security)*  
-    🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2839725,103.84431579999999&query_place_id=ChIJz5q97wEZ2jERGSUsTLsiXiY)**  
+*(Static Map Image Redacted for Credential Security)*  
+
+🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2840536,103.84415260000002&query_place_id=ChIJw9DmRAAZ2jERxBnXOnMmxiI)**
+
+#### 2. Fortune Garden
+This restaurant is located at 61 Pagoda St, MRT Exit A, Singapore 059220.
+
+According to the Google Maps data, it has an average rating of [4.1] stars on Google Reviews.
+
+*(Static Map Image Redacted for Credential Security)*  
+
+🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.2834630999999999,103.84395959999999&query_place_id=ChIJsW6RkwYZ2jERPd7CCOsiCY8)**
+
+#### 3. Dong Bei Ren Jia
+This restaurant is located at 22 Upper Cross St, Singapore 058334.
+
+According to the Google Maps data, it has an average rating of [4.4] stars on Google Reviews.
+
+*(Static Map Image Redacted for Credential Security)*  
+
+🔗 **[Open on Google Maps](https://www.google.com/maps/search/?api=1&query=1.283946,103.845344&query_place_id=ChIJL2lVrgwZ2jERGxnaLBvw9Zc)**
+
+These three locations have been identified by the Google Maps Helper Tool as potential places to try for delicious food in Chinatown, Singapore.
+
+However, please note that we cannot determine subjective rankings or real-time metrics such as crowd levels without direct access to live data. The ratings mentioned above are based on historical reviews and might not reflect current conditions.
+
+It is also important to mention that the number of results returned by the tool was capped at 3 due to the search term's specificity, and further refinement may provide additional locations matching the query.
+
+Based on this information, we recommend trying these three locations for a taste of Singapore's Chinatown culinary scene.
 
 </details>
 
