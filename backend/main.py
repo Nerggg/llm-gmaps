@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import urllib.parse
 
 from backend.services.google_maps import google_maps_service
 from backend.config import settings
@@ -41,7 +42,16 @@ class TTLCache:
 search_cache = TTLCache()
 
 def sanitize_input(text: str) -> str:
-    clean = re.sub(r"[^\w\s\-\,\.]", "", text)
+    """
+    Sanitizes queries, strips out redundant conversational phrases like 'near me',
+    and removes dangerous characters to ensure clean search strings.
+    """
+    clean = re.sub(r"\bnear\s+me\b", "", text, flags=re.IGNORECASE)
+    
+    clean = re.sub(r"[^\w\s\-\,\.]", "", clean)
+    
+    clean = re.sub(r"\s+", " ", clean)
+    
     return clean.strip()[:100]
 
 @app.get("/api/search")
@@ -102,8 +112,10 @@ async def get_directions(
     try:
         info = await google_maps_service.get_directions_info(sanitized_origin, sanitized_dest)
         
-        # User navigation URL
-        directions_url = f"https://www.google.com/maps/dir/?api=1&origin={sanitized_origin}&destination={sanitized_dest}"
+        safe_origin = urllib.parse.quote(sanitized_origin)
+        safe_dest = urllib.parse.quote(sanitized_dest)
+        
+        directions_url = f"https://www.google.com/maps/dir/?api=1&origin={safe_origin}&destination={safe_dest}"
         
         if info:
             return {
